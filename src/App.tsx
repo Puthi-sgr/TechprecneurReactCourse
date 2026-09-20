@@ -20,7 +20,7 @@ interface SampleProductResponse {
 }
 
 function App() {
-  const [products, setProducts] = useState<Product[]>(initialProducts)
+  const [products, setProducts] = useState<Product[] | null>(null)
   const [inStockOnly, setInStockOnly] = useState(false)
   const [loadingSamples, setLoadingSamples] = useState(false)
   const [sampleError, setSampleError] = useState<string | null>(null)
@@ -49,7 +49,7 @@ function App() {
     setLoadingSamples(true)
     setSampleError(null)
     try {
-      const response = await fetch('https://fakestoreapi.com/products?limit=3')
+      const response = await fetch('https://fakestoreapi.com/productz')
       if (!response.ok) {
         throw new Error(`Request failed with status ${response.status}`)
       }
@@ -99,7 +99,7 @@ function App() {
 
         <div className="mt-8 grid grid-cols-1 gap-8 md:grid-cols-3">
           <main className="md:col-span-2">
-            <Section title="Catalog">
+            <Section titel="Catalog">
               <label className="mb-4 flex cursor-pointer items-center gap-2 text-sm font-medium text-gray-700">
                 <input
                   type="checkbox"
