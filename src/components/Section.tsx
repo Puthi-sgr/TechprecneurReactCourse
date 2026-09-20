@@ -1,6 +1,11 @@
 import type { ReactNode } from 'react'
 
-export function Section({ title, children }: { title: string; children: ReactNode }) {
+interface SectionProps {
+  title: string
+  children: ReactNode
+}
+
+export function Section({ title, children }: SectionProps) {
   return (
     <section>
       <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-gray-500">

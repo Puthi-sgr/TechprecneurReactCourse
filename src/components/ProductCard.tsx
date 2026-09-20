@@ -5,9 +5,13 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import type { Product } from '@/types'
+import type { PublicProduct } from '@/types'
 
-export function ProductCard({ product }: { product: Product }) {
+interface ProductCardProps {
+  product: PublicProduct
+}
+
+export function ProductCard({ product }: ProductCardProps) {
   return (
     <Card className="transition-shadow duration-200 hover:shadow-md">
       <CardHeader>
@@ -27,6 +31,9 @@ export function ProductCard({ product }: { product: Product }) {
       <CardContent>
         <p className="text-lg font-semibold text-gray-900">
           ${product.price.toFixed(2)}
+        </p>
+        <p className="mt-1 text-sm text-gray-500">
+          {product.description ?? 'No description yet.'}
         </p>
       </CardContent>
     </Card>

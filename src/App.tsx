@@ -2,18 +2,28 @@ import { useState } from 'react'
 import { ProductCard } from './components/ProductCard'
 import { ProductForm } from './components/ProductForm'
 import { Section } from './components/Section'
+import { Button } from './components/ui/button'
 import type { Product, ProductDraft } from './types'
 
 const initialProducts: Product[] = [
-  { id: 1, name: 'Mechanical keyboard', price: 89, inStock: true },
-  { id: 2, name: 'USB-C hub', price: 42.5, inStock: true },
-  { id: 3, name: 'HDMI cable (2m)', price: 9.99, inStock: false },
-  { id: 4, name: 'Laptop stand', price: 34, inStock: true },
+  { id: 1, name: 'Mechanical keyboard', price: 89, cost: 54, inStock: true, description: 'Tactile switches, hot-swappable.' },
+  { id: 2, name: 'USB-C hub', price: 42.5, cost: 26, inStock: true },
+  { id: 3, name: 'HDMI cable (2m)', price: 9.99, cost: 5, inStock: false, description: 'Braided jacket.' },
+  { id: 4, name: 'Laptop stand', price: 34, cost: 19, inStock: true },
 ]
+
+interface SampleProductResponse {
+  id?: number
+  title?: string
+  price?: number
+  description?: string
+}
 
 function App() {
   const [products, setProducts] = useState<Product[]>(initialProducts)
   const [inStockOnly, setInStockOnly] = useState(false)
+  const [loadingSamples, setLoadingSamples] = useState(false)
+  const [sampleError, setSampleError] = useState<string | null>(null)
 
   const visibleProducts = inStockOnly
     ? products.filter((product) => product.inStock)
@@ -21,8 +31,50 @@ function App() {
   const soldOutCount = products.filter((product) => !product.inStock).length
 
   const addProduct = (draft: ProductDraft) => {
+    const price = draft.price ?? 0
     const nextId = products.reduce((max, product) => Math.max(max, product.id), 0) + 1
-    setProducts([...products, { id: nextId, ...draft, inStock: true }])
+    setProducts([
+      ...products,
+      {
+        id: nextId,
+        name: draft.name ?? 'Untitled product',
+        price,
+        cost: Math.round(price * 0.6),
+        inStock: true,
+      },
+    ])
+  }
+
+  const loadSampleProducts = async () => {
+    setLoadingSamples(true)
+    setSampleError(null)
+    try {
+      const response = await fetch('https://fakestoreapi.com/products?limit=3')
+      if (!response.ok) {
+        throw new Error(`Request failed with status ${response.status}`)
+      }
+      const data: unknown = await response.json()
+      if (!Array.isArray(data)) {
+        throw new Error('Unexpected response shape')
+      }
+      const samples: Product[] = data.map((raw) => {
+        const item = raw as SampleProductResponse
+        const price = item.price ?? 0
+        return {
+          id: (item.id ?? 0) + 1000,
+          name: item.title ?? 'Sample product',
+          price,
+          cost: Math.round(price * 0.6),
+          inStock: true,
+          description: item.description,
+        }
+      })
+      setProducts((prev) => [...(prev ?? []), ...samples])
+    } catch (error) {
+      setSampleError(error instanceof Error ? error.message : 'Failed to load products.')
+    } finally {
+      setLoadingSamples(false)
+    }
   }
 
   return (
@@ -61,6 +113,18 @@ function App() {
                 {visibleProducts.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
+              </div>
+              <div className="mt-6">
+                <Button
+                  variant="outline"
+                  onClick={() => void loadSampleProducts()}
+                  disabled={loadingSamples}
+                >
+                  {loadingSamples ? 'Loading…' : 'Load sample products'}
+                </Button>
+                {sampleError && (
+                  <p className="mt-2 text-sm text-red-600">{sampleError}</p>
+                )}
               </div>
             </Section>
           </main>
