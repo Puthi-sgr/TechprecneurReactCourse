@@ -3,6 +3,8 @@ import { ProductCard } from '@/components/ProductCard'
 import { ProductForm } from '@/components/ProductForm'
 import { Section } from '@/components/Section'
 import { Button } from '@/components/ui/button'
+import { CartPanel } from '@/components/cart/CartPanel'
+import { CheckoutSummary } from '@/components/cart/CheckoutSummary'
 import type { Product, ProductDraft } from '@/types'
 
 const initialProducts: Product[] = [
@@ -129,7 +131,13 @@ export function CatalogPage() {
             </Section>
           </main>
 
-          <aside>
+          <aside className="space-y-8">
+            <div>
+              <CartPanel />
+              <div className="mt-4">
+                <CheckoutSummary />
+              </div>
+            </div>
             <Section title="Add product">
               <ProductForm onSubmit={addProduct} />
             </Section>
