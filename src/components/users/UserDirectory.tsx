@@ -1,13 +1,7 @@
-import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Section } from '@/components/Section'
+import { useFetch } from '@/hooks/useFetch'
 import type { User } from '@/types'
-
-type FetchState =
-  | { status: 'loading' }
-  | { status: 'error'; message: string }
-  | { status: 'empty' }
-  | { status: 'success'; users: User[] }
 
 function UserSkeleton() {
   return (
@@ -29,53 +23,27 @@ function UserSkeleton() {
 }
 
 export function UserDirectory() {
-  const [state, setState] = useState<FetchState>({ status: 'loading' })
-
-  useEffect(() => {
-    let cancelled = false
-
-    fetch('https://jsonplaceholder.typicode.com/users')
-      .then((response) => {
-        if (!response.ok) throw new Error(`Request failed with status ${response.status}`)
-        return response.json() as Promise<User[]>
-      })
-      .then((users) => {
-        if (cancelled) return
-        setState(
-          users.length === 0
-            ? { status: 'empty' }
-            : { status: 'success', users },
-        )
-      })
-      .catch((error: unknown) => {
-        if (cancelled) return
-        setState({
-          status: 'error',
-          message: error instanceof Error ? error.message : 'Failed to load users.',
-        })
-      })
-
-    return () => {
-      cancelled = true
-    }
-  }, [])
+  const { data: users, loading, error } = useFetch<User[]>(
+    'https://jsonplaceholder.typicode.com/users',
+  )
 
   return (
     <Section title="User directory">
-      {state.status === 'loading' && <UserSkeleton />}
-      {state.status === 'error' && (
+      {loading && <UserSkeleton />}
+      {error && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {state.message}
+          {error}
         </div>
       )}
-      {state.status === 'empty' && (
+      {!loading && !error && users !== null && users.length === 0 && (
         <p className="rounded-lg border border-dashed border-gray-300 bg-white px-4 py-8 text-center text-sm text-gray-500">
           No users found.
         </p>
       )}
-      {state.status === 'success' && (
+      {/* data is T | null — the `users !== null` guard is what lets .map() typecheck */}
+      {users !== null && users.length > 0 && (
         <ul className="space-y-3">
-          {state.users.map((user) => (
+          {users.map((user) => (
             <li key={user.id}>
               <Link
                 to={`/users/${user.id}`}
