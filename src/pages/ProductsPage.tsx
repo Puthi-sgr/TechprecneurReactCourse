@@ -1,8 +1,11 @@
+import { useState } from 'react'
 import { CartPanel } from '@/components/cart/CartPanel'
 import { CheckoutSummary } from '@/components/cart/CheckoutSummary'
+import { CheckoutForm } from '@/components/CheckoutForm'
 import { Section } from '@/components/Section'
 import { Button } from '@/components/ui/button'
 import { useCart } from '@/context/CartContext'
+import { useDebounce } from '@/hooks/useDebounce'
 import { useFetch } from '@/hooks/useFetch'
 import type { ShopProduct } from '@/types'
 
@@ -58,24 +61,67 @@ export function ProductsPage() {
   )
   const { dispatch } = useCart()
 
+  const [query, setQuery] = useState('')
+  const debouncedQuery = useDebounce(query, 500)
+
+  const filteredProducts =
+    products === null
+      ? null
+      : products.filter((product) =>
+          product.title
+            .toLowerCase()
+            .includes(debouncedQuery.trim().toLowerCase()),
+        )
+
   return (
     <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
       <main className="md:col-span-2">
         <Section title="Shop">
+          <div className="mb-4 space-y-2">
+            <label
+              htmlFor="product-search"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Search products
+            </label>
+            <input
+              id="product-search"
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Type to filter…"
+              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 focus:border-blue-600 focus:outline-none"
+            />
+            <div className="flex gap-4 text-xs text-gray-500">
+              <span>
+                Raw:{' '}
+                <span className="font-semibold text-gray-900">
+                  {query === '' ? '—' : query}
+                </span>
+              </span>
+              <span>
+                Debounced:{' '}
+                <span className="font-semibold text-blue-700">
+                  {debouncedQuery === '' ? '—' : debouncedQuery}
+                </span>
+              </span>
+            </div>
+          </div>
+
           {loading && <ProductSkeleton />}
           {error && (
             <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
               {error}
             </div>
           )}
-          {!loading && !error && products !== null && products.length === 0 && (
+          {!loading && !error && filteredProducts !== null && filteredProducts.length === 0 && (
             <p className="rounded-lg border border-dashed border-gray-300 bg-white px-4 py-8 text-center text-sm text-gray-500">
               No products found.
             </p>
           )}
-          {products !== null && products.length > 0 && (
+          {filteredProducts !== null && filteredProducts.length > 0 && (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              {products.map((product) => (
+              {filteredProducts.map((product) => (
                 <ProductRow
                   key={product.id}
                   product={product}
@@ -98,6 +144,11 @@ export function ProductsPage() {
         <CartPanel />
         <div className="mt-4">
           <CheckoutSummary />
+        </div>
+        <div className="mt-4">
+          <CheckoutForm
+            onSubmit={() => window.alert('Order placed — thank you!')}
+          />
         </div>
       </aside>
     </div>
