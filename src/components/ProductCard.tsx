@@ -5,6 +5,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { useCart } from '@/context/CartContext'
 import type { PublicProduct } from '@/types'
 
 interface ProductCardProps {
@@ -12,6 +14,17 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product }: ProductCardProps) {
+  const { dispatch } = useCart()
+
+  const addToCart = () => {
+    dispatch({
+      type: 'ADD_ITEM',
+      productId: product.id,
+      name: product.name,
+      price: product.price,
+    })
+  }
+
   return (
     <Card className="transition-shadow duration-200 hover:shadow-md">
       <CardHeader>
@@ -35,6 +48,15 @@ export function ProductCard({ product }: ProductCardProps) {
         <p className="mt-1 text-sm text-gray-500">
           {product.description ?? 'No description yet.'}
         </p>
+        <Button
+          variant="outline"
+          size="sm"
+          className="mt-3"
+          onClick={addToCart}
+          disabled={!product.inStock}
+        >
+          Add to cart
+        </Button>
       </CardContent>
     </Card>
   )
