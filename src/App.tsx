@@ -2,9 +2,8 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { NavBar } from '@/components/NavBar'
 import { AuthProvider } from '@/context/AuthContext'
 import { CartProvider } from '@/context/CartContext'
-import { CatalogPage } from '@/pages/CatalogPage'
+import { ProductsPage } from '@/pages/ProductsPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
-import { TodosPage } from '@/pages/TodosPage'
 import { UserDetailPage } from '@/pages/UserDetailPage'
 import { UsersPage } from '@/pages/UsersPage'
 
@@ -26,11 +25,10 @@ function App() {
 
             <main className="mt-8">
               <Routes>
-                <Route path="/" element={<Navigate to="/todos" replace />} />
-                <Route path="/todos" element={<TodosPage />} />
+                <Route path="/" element={<Navigate to="/shop" replace />} />
+                <Route path="/shop" element={<ProductsPage />} />
                 <Route path="/users" element={<UsersPage />} />
                 <Route path="/users/:id" element={<UserDetailPage />} />
-                <Route path="/catalog" element={<CatalogPage />} />
                 <Route path="*" element={<NotFoundPage />} />
               </Routes>
             </main>

@@ -8,10 +8,10 @@ export function NotFoundPage() {
         That page doesn't exist.
       </p>
       <Link
-        to="/todos"
+        to="/shop"
         className="mt-4 inline-block text-sm font-medium text-blue-600 hover:underline"
       >
-        ← Back to todos
+        ← Back to shop
       </Link>
     </div>
   )
