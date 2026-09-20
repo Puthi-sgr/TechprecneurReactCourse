@@ -1,4 +1,6 @@
-export function Section({ title, children }) {
+import type { ReactNode } from 'react'
+
+export function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section>
       <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-gray-500">
