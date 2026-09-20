@@ -1,5 +1,6 @@
-import { createContext, useContext, useReducer } from 'react'
+import { createContext, useCallback, useContext, useMemo } from 'react'
 import type { Dispatch, ReactNode } from 'react'
+import { useLocalStorage } from '@/hooks/useLocalStorage'
 
 export interface CartLine {
   productId: number
@@ -61,13 +62,20 @@ interface CartContextValue {
 
 const CartContext = createContext<CartContextValue | undefined>(undefined)
 
+const STORAGE_KEY = 'cart'
+
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [lines, dispatch] = useReducer(cartReducer, [])
-  return (
-    <CartContext.Provider value={{ lines, dispatch }}>
-      {children}
-    </CartContext.Provider>
+  // Persistence lives in the hook; the reducer stays the single owner of cart rules.
+  const [lines, setLines] = useLocalStorage<CartLine[]>(STORAGE_KEY, [])
+
+  const dispatch = useCallback<Dispatch<CartAction>>(
+    (action) => setLines((prev) => cartReducer(prev, action)),
+    [setLines],
   )
+
+  const value = useMemo(() => ({ lines, dispatch }), [lines, dispatch])
+
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>
 }
 
 export function useCart(): CartContextValue {
