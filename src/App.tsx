@@ -58,9 +58,9 @@ function App() {
                   <Route path="/shop" element={<ProductsPage />} />
                   <Route path="/users" element={<UsersPage />} />
                   <Route path="/users/:id" element={<UserDetailPage />} />
-                  <Route path="/login" element={<SupabasePages />} />
-                  <Route path="/signup" element={<SupabasePages />} />
-                  <Route path="/tracker" element={<SupabasePages />} />
+                  <Route path="/login/*" element={<SupabasePages />} />
+                  <Route path="/signup/*" element={<SupabasePages />} />
+                  <Route path="/tracker/*" element={<SupabasePages />} />
                   <Route path="*" element={<NotFoundPage />} />
                 </Routes>
                 </Suspense>
