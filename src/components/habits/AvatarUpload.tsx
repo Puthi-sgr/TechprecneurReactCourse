@@ -83,6 +83,9 @@ export function AvatarUpload({ userId, initialAvatarUrl, onSaved }: AvatarUpload
         <img
           src={previewUrl ?? avatarUrl ?? '/avatar-placeholder.svg'}
           alt={previewUrl !== null ? 'Preview of the selected avatar' : 'Your profile avatar'}
+          width={64}
+          height={64}
+          loading="lazy"
           className="size-16 rounded-full border border-gray-200 object-cover"
         />
         <div className="min-w-0 flex-1">

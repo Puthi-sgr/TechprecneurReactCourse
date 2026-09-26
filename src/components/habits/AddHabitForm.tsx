@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Button } from '@/components/ui/button'
+import { normalizeHabitInput } from '../../../shared/habitLogic'
 
 interface AddHabitFormProps {
   submitting: boolean
@@ -16,9 +17,9 @@ export function AddHabitForm({ submitting, onSubmit }: AddHabitFormProps) {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    const trimmedName = name.trim()
-    if (trimmedName.length === 0) return
-    await onSubmit({ name: trimmedName, description: description.trim() })
+    if (name.trim().length === 0) return
+    const values = normalizeHabitInput(name, description)
+    await onSubmit(values)
     setName('')
     setDescription('')
   }

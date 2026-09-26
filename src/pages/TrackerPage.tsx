@@ -11,12 +11,10 @@ import type { HabitWithLogs } from '@/types'
 import { getQueuedHabits, queueHabit, removeQueuedHabit } from '@/lib/offlineHabits'
 import type { DisplayHabit } from '@/lib/offlineHabits'
 import { ShareButton } from '@/components/ShareButton'
+import { getLocalDateString } from '../../shared/habitLogic'
 
 function getTodayDateString() {
-  const now = new Date()
-  const month = `${now.getMonth() + 1}`.padStart(2, '0')
-  const day = `${now.getDate()}`.padStart(2, '0')
-  return `${now.getFullYear()}-${month}-${day}`
+  return getLocalDateString()
 }
 
 export function TrackerPage() {

@@ -1,20 +1,18 @@
 import { useEffect, useState } from 'react'
+import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { NavBar } from '@/components/NavBar'
-import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { AuthProvider } from '@/context/AuthContext'
 import { CartProvider } from '@/context/CartContext'
-import { SupabaseAuthProvider } from '@/context/SupabaseAuthProvider'
-import { ProductsPage } from '@/pages/ProductsPage'
-import { NotFoundPage } from '@/pages/NotFoundPage'
-import { UserDetailPage } from '@/pages/UserDetailPage'
-import { UsersPage } from '@/pages/UsersPage'
-import { LoginPage } from '@/pages/LoginPage'
-import { SignupPage } from '@/pages/SignupPage'
-import { TrackerPage } from '@/pages/TrackerPage'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { OfflineBanner } from '@/components/OfflineBanner'
 import { UpdateToast } from '@/components/UpdateToast'
+
+const ProductsPage = lazy(() => import('@/pages/ProductsPage'))
+const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'))
+const UserDetailPage = lazy(() => import('@/pages/UserDetailPage'))
+const UsersPage = lazy(() => import('@/pages/UsersPage'))
+const SupabasePages = lazy(() => import('@/pages/SupabasePages'))
 
 function App() {
   const [installEvent, setInstallEvent] = useState<(Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> }) | null>(null)
@@ -34,7 +32,6 @@ function App() {
   }
 
   return (
-    <SupabaseAuthProvider>
       <AuthProvider>
         <CartProvider>
           <div className="min-h-screen bg-gray-50 text-gray-900">
@@ -55,31 +52,23 @@ function App() {
               </header>
 
               <main className="mt-8">
+                <Suspense fallback={<p className="rounded-xl border border-gray-200 bg-white p-6 text-sm text-gray-600" role="status">Loading page…</p>}>
                 <Routes>
                   <Route path="/" element={<Navigate to="/shop" replace />} />
                   <Route path="/shop" element={<ProductsPage />} />
                   <Route path="/users" element={<UsersPage />} />
                   <Route path="/users/:id" element={<UserDetailPage />} />
-                  <Route path="/login" element={<LoginPage />} />
-                  <Route path="/signup" element={<SignupPage />} />
-                  <Route
-                    path="/tracker"
-                    element={
-                      <ProtectedRoute>
-                        <ErrorBoundary section="Habit tracker">
-                          <TrackerPage />
-                        </ErrorBoundary>
-                      </ProtectedRoute>
-                    }
-                  />
+                  <Route path="/login" element={<SupabasePages />} />
+                  <Route path="/signup" element={<SupabasePages />} />
+                  <Route path="/tracker" element={<SupabasePages />} />
                   <Route path="*" element={<NotFoundPage />} />
                 </Routes>
+                </Suspense>
               </main>
             </div>
           </div>
         </CartProvider>
       </AuthProvider>
-    </SupabaseAuthProvider>
   )
 }
 
