@@ -74,8 +74,8 @@ export function ProductsPage() {
         )
 
   return (
-    <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-      <main className="md:col-span-2">
+    <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+      <main className="lg:col-span-2">
         <Section title="Shop">
           <div className="mb-4 space-y-2">
             <label
@@ -120,7 +120,7 @@ export function ProductsPage() {
             </p>
           )}
           {filteredProducts !== null && filteredProducts.length > 0 && (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {filteredProducts.map((product) => (
                 <ProductRow
                   key={product.id}

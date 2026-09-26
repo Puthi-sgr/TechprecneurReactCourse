@@ -25,7 +25,7 @@ export function NavBar() {
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-4">
-      <nav className="flex gap-2" aria-label="Main navigation">
+      <nav className="flex flex-wrap gap-2" aria-label="Main navigation">
         <NavLink to="/shop" className={navLinkClass}>
           Shop
         </NavLink>

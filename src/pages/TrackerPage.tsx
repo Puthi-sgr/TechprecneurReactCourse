@@ -8,6 +8,9 @@ import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth'
 import { isSupabaseConfigured, supabase } from '@/lib/supabase'
 import type { HabitWithLogs } from '@/types'
+import { getQueuedHabits, queueHabit, removeQueuedHabit } from '@/lib/offlineHabits'
+import type { DisplayHabit } from '@/lib/offlineHabits'
+import { ShareButton } from '@/components/ShareButton'
 
 function getTodayDateString() {
   const now = new Date()
@@ -18,7 +21,8 @@ function getTodayDateString() {
 
 export function TrackerPage() {
   const { user, signOut } = useSupabaseAuth()
-  const [habits, setHabits] = useState<HabitWithLogs[]>([])
+  const [habits, setHabits] = useState<DisplayHabit[]>([])
+  const [queuedCount, setQueuedCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -55,6 +59,14 @@ export function TrackerPage() {
   }, [user])
 
   useEffect(() => {
+    if (user === null) return
+    getQueuedHabits(user.id).then((queued) => {
+      setQueuedCount(queued.length)
+      setHabits((current) => [
+        ...current.filter((habit) => !habit.syncPending),
+        ...queued.map((habit) => ({ ...habit, daily_logs: [], syncPending: true })),
+      ])
+    }).catch((caught: unknown) => setError(caught instanceof Error ? caught.message : 'Could not read offline habits.'))
     loadHabits()
       .then((rows) => {
         setHabits(rows)
@@ -65,12 +77,39 @@ export function TrackerPage() {
         setError(caught instanceof Error ? caught.message : 'Could not load your habits.')
         setLoading(false)
       })
-  }, [loadHabits])
+  }, [loadHabits, user])
+
+  useEffect(() => {
+    if (user === null) return
+    const syncQueuedHabits = async () => {
+      const queued = await getQueuedHabits(user.id).catch(() => [])
+      for (const habit of queued) {
+        const { error: syncError } = await supabase.from('habits').insert({
+          user_id: user.id, name: habit.name, description: habit.description,
+        })
+        if (syncError !== null) {
+          setError(`Could not sync “${habit.name}”: ${syncError.message}`)
+          continue
+        }
+        await removeQueuedHabit(habit.id)
+        setHabits((current) => current.filter((row) => row.id !== habit.id))
+      }
+      const remaining = await getQueuedHabits(user.id).catch(() => [])
+      setQueuedCount(remaining.length)
+      if (remaining.length === 0) {
+        const rows = await loadHabits().catch(() => null)
+        if (rows !== null) setHabits(rows)
+      }
+    }
+    window.addEventListener('online', syncQueuedHabits)
+    if (navigator.onLine) void syncQueuedHabits()
+    return () => window.removeEventListener('online', syncQueuedHabits)
+  }, [loadHabits, user])
 
   const refreshHabits = useCallback(
     (withSpinner: boolean) => {
       if (withSpinner) setLoading(true)
-      loadHabits()
+      return loadHabits()
         .then((rows) => {
           setHabits(rows)
           setError(null)
@@ -89,6 +128,25 @@ export function TrackerPage() {
     if (user === null) return
     setSubmitting(true)
     setError(null)
+    if (!navigator.onLine) {
+      const queued = {
+        id: crypto.randomUUID(),
+        user_id: user.id,
+        name: values.name,
+        description: values.description || null,
+        created_at: new Date().toISOString(),
+      }
+      try {
+        await queueHabit(queued)
+        setHabits((current) => [...current, { ...queued, daily_logs: [], syncPending: true }])
+        setQueuedCount((count) => count + 1)
+      } catch (caught) {
+        setError(caught instanceof Error ? caught.message : 'Could not queue this habit offline.')
+      } finally {
+        setSubmitting(false)
+      }
+      return
+    }
     try {
       const { error: insertError } = await supabase
         .from('habits')
@@ -100,7 +158,7 @@ export function TrackerPage() {
         .select('id')
         .single()
       if (insertError !== null) throw new Error(insertError.message)
-      refreshHabits(false)
+      await refreshHabits(false)
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Could not add the habit.')
     } finally {
@@ -205,9 +263,7 @@ export function TrackerPage() {
             Signed in as <span className="font-semibold text-gray-700">{user?.email}</span>
           </p>
         </div>
-        <Button variant="outline" onClick={() => void handleSignOut()}>
-          Sign out
-        </Button>
+        <div className="flex gap-2"><ShareButton /><Button variant="outline" onClick={() => void handleSignOut()}>Sign out</Button></div>
       </div>
 
       {user !== null && (
@@ -227,10 +283,11 @@ export function TrackerPage() {
       )}
 
       <AddHabitForm submitting={submitting} onSubmit={addHabit} />
+      {queuedCount > 0 && <p role="status" className="rounded-lg bg-blue-50 px-4 py-3 text-sm font-medium text-blue-900">{queuedCount} habit{queuedCount === 1 ? '' : 's'} queued to sync when you’re online.</p>}
 
       <ErrorBoundary section="Habit list">
       {loading ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2" aria-busy="true">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true">
           {[1, 2, 3, 4].map((card) => (
             <div
               key={card}
@@ -247,19 +304,19 @@ export function TrackerPage() {
           No habits yet — add your first one above.
         </p>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {habits.map((habit) => (
-            <HabitCard
-              key={habit.id}
-              habit={habit}
-              doneToday={habit.daily_logs.some(
-                (log) => log.log_date === today && log.completed,
-              )}
-              busy={busyHabitId === habit.id}
-              onToggle={toggleToday}
-              onSaveEdit={saveEdit}
-              onDelete={deleteHabit}
-            />
+              <div key={habit.id} className="relative">
+                <HabitCard
+                  habit={habit}
+                  doneToday={habit.daily_logs.some((log) => log.log_date === today && log.completed)}
+                  busy={busyHabitId === habit.id}
+                  onToggle={toggleToday}
+                  onSaveEdit={saveEdit}
+                  onDelete={deleteHabit}
+                />
+                {habit.syncPending && <span className="absolute right-3 top-3 rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-900">Queued</span>}
+            </div>
           ))}
         </div>
       )}
