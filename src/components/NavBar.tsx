@@ -32,6 +32,9 @@ export function NavBar() {
         <NavLink to="/users" className={navLinkClass}>
           Users
         </NavLink>
+        <NavLink to="/tracker" className={navLinkClass}>
+          Habit Tracker
+        </NavLink>
       </nav>
 
       {user !== null ? (

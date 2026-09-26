@@ -24,3 +24,29 @@ export interface ShopProduct {
   description: string
   category: string
 }
+
+export interface Habit {
+  id: string
+  user_id: string
+  name: string
+  description: string | null
+  created_at: string
+}
+
+export interface DailyLog {
+  id: string
+  habit_id: string
+  user_id: string
+  log_date: string
+  completed: boolean
+  created_at: string
+}
+
+export interface HabitWithLogs extends Habit {
+  daily_logs: DailyLog[]
+}
+
+export interface HabitInput {
+  name: string
+  description: string
+}
